@@ -1,0 +1,68 @@
+#!/usr/bin/env expect
+
+#log_user 0
+
+set mode [lindex $argv 0]
+set host [lindex $argv 1]
+set user [lindex $argv 2]
+set pass [lindex $argv 3]
+set chan [lindex $argv 4]
+
+if {$mode == "tls"} {
+    spawn openssl s_client -quiet -tls1_2 -connect $host:143 -starttls imap
+} else {
+    spawn openssl s_client -quiet -tls1_2 -connect $host:993
+}
+set openssl $spawn_id
+
+set ok "\[^ \]+ OK\[^ \]*\(.*\)\r\n"
+set no "\[^ \]+ NO\[^ \]*\(.*\)\r\n"
+
+expect {
+    -re $ok {
+        send_user "Connected, sending credentials\n"
+        stty -echo
+        send ". LOGIN $user $pass\r"
+        stty echo
+    }
+    timeout {
+        send_user "connect to $host timed out\n"
+        exit
+    }
+    eof {
+        send_user "EOF from $host\n"
+        exit
+    }
+}
+
+expect {
+    -re $ok {
+        send_user "Logged in\n"
+    }
+    -re $no {
+        send_user "Unable to login: $expect_out(1,string)\n"
+        exit
+    }
+}
+
+send ". CAPABILITY\r"
+expect -re "\\* CAPABILITY \(.*\)\r\n. OK.*\r\n"
+
+set capability $expect_out(1,string)
+regsub " LOGINDISABLED" $capability "" capability
+regsub " IDLE" $capability "" capability
+regsub -all " AUTH=\[^ \]+" $capability "" capability
+
+spawn mbsync -q -q $chan
+
+expect {
+    -re "
+}
+
+send "* OK \[CAPABILITY $capability\] localhost imapidle server ready\r"
+
+expect -re "^\(\[^ \]+\) LOGIN .*\r\n"
+set id $expect_out(1,string)
+send "$id OK\r"
+
+interact -u $openssl
