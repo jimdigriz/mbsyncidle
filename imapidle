@@ -12,6 +12,7 @@ if {$mode == "tls"} {
     spawn openssl s_client -quiet -tls1_2 -connect $host:993
 }
 set openssl $spawn_id
+stty raw -echo
 
 expect {
     -re "(\[^ \]+) OK.*\r" {
@@ -37,28 +38,24 @@ regsub -all " AUTH=\[^ \]+" $capability "" capability
 
 spawn mbsync -q -q $chan
 set mbsync $spawn_id
+stty raw -echo
 
 send "* OK\r"
-expect "* OK\r\n"
 
 set username UNKNOWN
 set password UNKNOWN
 expect {
-    -re "(\[^ \]+) CAPABILITY\r" {
+    -re "\n(\[^ \]+) CAPABILITY\r" {
         set id $expect_out(1,string)
-        expect *
         send "* CAPABILITY $capability\r"
-        expect "* CAPABILITY $capability\r\n"
         send "$id OK\r"
-        expect "$id OK\r\n"
         exp_continue
     }
-    -re "(\[^ \]+) LOGIN \"(.*)\" \"(.*)\"\r" {
+    -re "\n(\[^ \]+) LOGIN \"(.*)\" \"(.*)\"\r" {
         set id $expect_out(1,string)
         set username $expect_out(2,string)
         set password $expect_out(3,string)
         send "$id OK\r"
-        expect "$id OK\r\n"
     }
 }
 
