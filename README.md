@@ -1,4 +1,4 @@
-Connects to your IMAP server and uses [IMAP IDLE](https://tools.ietf.org/html/rfc2177) as a trigger to run your mail syncing code (ie. [mbsync](http://isync.sourceforge.net)).
+Connects to your IMAP server and uses [`IDLE`](https://tools.ietf.org/html/rfc2177) as a trigger to run [`mbsync`](http://isync.sourceforge.net).
 
 # Preflight
 
@@ -32,4 +32,4 @@ Connects to your IMAP server and uses [IMAP IDLE](https://tools.ietf.org/html/rf
 
 # Usage
 
-    ./imapidle {tls,ssl} HOSTNAME CHANNEL
+    ./mbsyncidle {tls,ssl} HOSTNAME CHANNEL

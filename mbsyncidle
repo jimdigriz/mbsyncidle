@@ -1,0 +1,59 @@
+#!/usr/bin/env expect
+
+#log_user 0
+set stty_init "raw -echo"
+
+set mode [lindex $argv 0]
+set host [lindex $argv 1]
+set chan [lindex $argv 2]
+
+set openssl_args "$host:143 -starttls imap"
+if {$mode != "tls"} {
+    set openssl_args "$host:993"
+}
+
+spawn /bin/sh -c "exec openssl s_client -quiet -tls1_2 -connect $openssl_args 2>/dev/null"
+set server $spawn_id
+
+if {$mode == "tls"} {
+    send ". NOOP\r\n"
+}
+
+expect {
+    "? OK*\r\n" {
+        send_user "Connected\n"
+    }
+    timeout {
+        send_user "connect to $host timed out\n"
+        exit
+    }
+    eof {
+        send_user "EOF from $host\n"
+        exit
+    }
+}
+
+spawn /bin/sh -c "exec mbsync -q -q $chan 2>/dev/null"
+set client $spawn_id
+
+send "* OK\r\n"
+
+#expect {
+#    -re "(\[^ \]+) CAPABILITY\r" {
+#        send "* CAPABILITY $capability\r"
+#        send "$interact_out(1,string) OK\r"
+#    }
+#}
+
+     #-re "\\* CAPABILITY (\[^\r\]+)\r\n" {
+
+interact -input $server eof {
+    send_user "********************************EOF from client********************************************\n"
+    send_user "********************************EOF from client********************************************\n"
+    send_user "********************************EOF from client********************************************\n"
+    send_user "********************************EOF from client********************************************\n"
+    send_user "********************************EOF from client********************************************\n"
+    send_user "********************************EOF from client********************************************\n"
+    send_user "********************************EOF from client********************************************\n"
+    break
+} -output $server
