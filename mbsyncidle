@@ -38,22 +38,9 @@ set client $spawn_id
 
 send "* OK\r\n"
 
-#expect {
-#    -re "(\[^ \]+) CAPABILITY\r" {
-#        send "* CAPABILITY $capability\r"
-#        send "$interact_out(1,string) OK\r"
-#    }
-#}
-
-     #-re "\\* CAPABILITY (\[^\r\]+)\r\n" {
-
-interact -input $server eof {
-    send_user "********************************EOF from client********************************************\n"
-    send_user "********************************EOF from client********************************************\n"
-    send_user "********************************EOF from client********************************************\n"
-    send_user "********************************EOF from client********************************************\n"
-    send_user "********************************EOF from client********************************************\n"
-    send_user "********************************EOF from client********************************************\n"
-    send_user "********************************EOF from client********************************************\n"
-    break
-} -output $server
+interact -i $server -u $client -re "\\* CAPABILITY (\[^\r\]+)\r\n" {
+    set capability $interact_out(1,string)
+    regsub " LOGINDISABLED" $capability "" capability
+    regsub " IDLE" $capability "" capability
+    regsub -all " AUTH=\[^ \]+" $capability "" capability
+}
