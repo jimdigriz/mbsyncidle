@@ -4,9 +4,7 @@
 
 set mode [lindex $argv 0]
 set host [lindex $argv 1]
-set user [lindex $argv 2]
-set pass [lindex $argv 3]
-set chan [lindex $argv 4]
+set chan [lindex $argv 2]
 
 if {$mode == "tls"} {
     spawn openssl s_client -quiet -tls1_2 -connect $host:143 -starttls imap
@@ -15,15 +13,9 @@ if {$mode == "tls"} {
 }
 set openssl $spawn_id
 
-set ok "\[^ \]+ OK\[^ \]*\(.*\)\r\n"
-set no "\[^ \]+ NO\[^ \]*\(.*\)\r\n"
-
 expect {
-    -re $ok {
-        send_user "Connected, sending credentials\n"
-        stty -echo
-        send ". LOGIN $user $pass\r"
-        stty echo
+    -re "(\[^ \]+) OK.*\r" {
+        send_user "Connected\n"
     }
     timeout {
         send_user "connect to $host timed out\n"
@@ -35,18 +27,8 @@ expect {
     }
 }
 
-expect {
-    -re $ok {
-        send_user "Logged in\n"
-    }
-    -re $no {
-        send_user "Unable to login: $expect_out(1,string)\n"
-        exit
-    }
-}
-
 send ". CAPABILITY\r"
-expect -re "\\* CAPABILITY \(.*\)\r\n. OK.*\r\n"
+expect -re "\\* CAPABILITY (\[^\r\]+)\r"
 
 set capability $expect_out(1,string)
 regsub " LOGINDISABLED" $capability "" capability
@@ -54,15 +36,30 @@ regsub " IDLE" $capability "" capability
 regsub -all " AUTH=\[^ \]+" $capability "" capability
 
 spawn mbsync -q -q $chan
+set mbsync $spawn_id
 
+send "* OK\r"
+expect "* OK\r\n"
+
+set username UNKNOWN
+set password UNKNOWN
 expect {
-    -re "
+    -re "(\[^ \]+) CAPABILITY\r" {
+        set id $expect_out(1,string)
+        expect *
+        send "* CAPABILITY $capability\r"
+        expect "* CAPABILITY $capability\r\n"
+        send "$id OK\r"
+        expect "$id OK\r\n"
+        exp_continue
+    }
+    -re "(\[^ \]+) LOGIN \"(.*)\" \"(.*)\"\r" {
+        set id $expect_out(1,string)
+        set username $expect_out(2,string)
+        set password $expect_out(3,string)
+        send "$id OK\r"
+        expect "$id OK\r\n"
+    }
 }
-
-send "* OK \[CAPABILITY $capability\] localhost imapidle server ready\r"
-
-expect -re "^\(\[^ \]+\) LOGIN .*\r\n"
-set id $expect_out(1,string)
-send "$id OK\r"
 
 interact -u $openssl

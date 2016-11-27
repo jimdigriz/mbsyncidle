@@ -32,4 +32,4 @@ Connects to your IMAP server and uses [IMAP IDLE](https://tools.ietf.org/html/rf
 
 # Usage
 
-    ./imapidle {tls,ssl} HOSTNAME USERNAME PASSWORD CHANNEL
+    ./imapidle {tls,ssl} HOSTNAME CHANNEL
