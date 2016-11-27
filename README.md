@@ -12,7 +12,7 @@ Connects to your IMAP server and uses [IMAP IDLE](https://tools.ietf.org/html/rf
     IMAPAccount test
     User me@example.com
     Pass password
-    Tunnel "exec socat STDIO FILE:$(readlink /proc/$PPID/fd/0)"
+    Tunnel "exec socat - $(readlink /proc/$PPID/fd/0)"
     RequireSSL no
     
     IMAPStore test
