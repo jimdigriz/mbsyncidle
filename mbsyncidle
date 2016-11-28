@@ -63,9 +63,8 @@ interact {
             capability $server $client
         }
     }
-    -re "\[0-9\]\+ LOGOUT\r\n" {
-        send_user "LOGOUT\n"
-        return
+    -re "(\[0-9\]\+) LOGOUT\r\n" {
+        send -i $client "7 OK\r\n"
     }
 }
 
