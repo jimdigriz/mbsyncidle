@@ -2,6 +2,8 @@
 
 #log_user 0
 set stty_init "raw -echo"
+remove_nulls -d 0
+parity -d 0
 
 set mode [lindex $argv 0]
 set host [lindex $argv 1]
@@ -38,9 +40,33 @@ set client $spawn_id
 
 send "* OK\r\n"
 
-interact -i $server -u $client -re "\\* CAPABILITY (\[^\r\]+)\r\n" {
-    set capability $interact_out(1,string)
-    regsub " LOGINDISABLED" $capability "" capability
-    regsub " IDLE" $capability "" capability
-    regsub -all " AUTH=\[^ \]+" $capability "" capability
+set capability ""
+
+proc capability {server client} {
+    interact -i $server -u $client -re "\\* CAPABILITY (\[^\r\]+)\r\n" {
+        send -i $client -- $interact_out(0,string)
+
+        set capability $interact_out(1,string)
+        regsub " LOGINDISABLED" $capability "" capability
+        regsub " IDLE" $capability "" capability
+        regsub -all " AUTH=\[^ \]+" $capability "" capability
+
+        return
+    }
 }
+
+interact {
+    -i $client -u $server
+    -re "\[0-9\]\+ CAPABILITY\r\n" {
+        send -i $server -- $interact_out(0,string)
+        if {$capability == ""} {
+            capability $server $client
+        }
+    }
+    -re "\[0-9\]\+ LOGOUT\r\n" {
+        send_user "LOGOUT\n"
+        return
+    }
+}
+
+send_user "FIN\n"
