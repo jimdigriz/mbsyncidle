@@ -41,7 +41,6 @@ set client $spawn_id
 send "* OK\r\n"
 
 set capability ""
-
 proc capability {server client} {
     interact -i $server -u $client -re "\\* CAPABILITY (\[^\r\]+)\r\n" {
         send -i $client -- $interact_out(0,string)
@@ -67,5 +66,3 @@ interact {
         send -i $client "7 OK\r\n"
     }
 }
-
-send_user "FIN\n"
