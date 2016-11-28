@@ -63,6 +63,6 @@ interact {
         }
     }
     -re "(\[0-9\]\+) LOGOUT\r\n" {
-        send -i $client "7 OK\r\n"
+        send -i $client "$interact_out(1,string) OK\r\n"
     }
 }
