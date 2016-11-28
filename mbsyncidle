@@ -1,6 +1,6 @@
 #!/usr/bin/env expect
 
-#log_user 0
+log_user 0
 set stty_init "raw -echo"
 remove_nulls -d 0
 parity -d 0
@@ -14,7 +14,7 @@ if {$mode != "tls"} {
     set openssl_args "$host:993"
 }
 
-spawn /bin/sh -c "exec openssl s_client -quiet -tls1_2 -connect $openssl_args 2>/dev/null"
+spawn -noecho /bin/sh -c "exec openssl s_client -quiet -tls1_2 -connect $openssl_args 2>/dev/null"
 set server $spawn_id
 
 if {$mode == "tls"} {
@@ -22,20 +22,18 @@ if {$mode == "tls"} {
 }
 
 expect {
-    "? OK*\r\n" {
-        send_user "Connected\n"
-    }
     timeout {
-        send_user "connect to $host timed out\n"
+        send_error "connect to $host timed out\n"
         exit
     }
     eof {
-        send_user "EOF from $host\n"
+        send_error "EOF from $host\n"
         exit
     }
+    "? OK*\r\n"
 }
 
-spawn /bin/sh -c "exec mbsync -q -q $chan 2>/dev/null"
+spawn -noecho /bin/sh -c "exec mbsync -q -q $chan 2>/dev/null"
 set client $spawn_id
 
 send "* OK\r\n"
